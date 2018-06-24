@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace 为接口-->
+<mapper namespace="com.demo.dao.UserDAO">
+    <!--目的：提供接口方法的sql语句配置-->
+
+    <select id="findRoles" resultType="java.lang.String">
+        select role from user u, role r,user_role ur where u.username=#{username} and u.id=ur.user_id and r.id=ur.role_id
+    </select>
+    <select id="findPermissions" resultType="string">
+        select permission from user u, role r, permission p, user_role ur, role_permission rp where u.username=#{username} and u.id=ur.user_id and r.id=ur.role_id and r.id=rp.role_id and p.id=rp.permission_id
+    </select>
+    <select id="findUser" resultType="user">
+        SELECT * FROM user WHERE username=#{username}
+    </select>
+    <insert id="createUser" parameterType="User" useGeneratedKeys="true" keyProperty="user.id">
+        INSERT INTO user(username,password,salt,locked) VALUES(#{user.username},#{user.password},#{user.salt},#{user.locked})
+    </insert>
+    <!--<update id=""/>-->
+
+    <!--<delete id=""/>-->
+
+
+</mapper>

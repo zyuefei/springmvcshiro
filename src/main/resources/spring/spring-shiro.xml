@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <context:component-scan base-package="com.demo.common"/>
+
+    <!-- AOP式方法级权限检查 使用注解方式检查权限 -->
+    <aop:config proxy-target-class="true"></aop:config>
+    <bean class="org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor">
+        <property name="securityManager" ref="securityManager"/>
+    </bean>
+
+    <!--shiro-->
+    <!--过滤器-->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"/>
+        <property name="loginUrl" value="login.html"/>
+        <property name="unauthorizedUrl" value="403.html"/>
+        <property name="filterChainDefinitions">
+            <value>
+                /login.html = anon
+                /subLogin = anon
+                /regist = anon
+                /* = authc
+            </value>
+        </property>
+
+    </bean>
+
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="realm" ref="realm"/>
+        <property name="sessionManager" ref="sessionManager"/>
+        <property name="cacheManager" ref="cacheManager"/>
+        <property name="rememberMeManager" ref="cookieRememberMeManager"/>
+    </bean>
+
+    <bean id="realm" class="com.demo.common.shiro.NormalRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
+    </bean>
+
+    <!-- 凭证匹配器 实现密码验证服务 -->
+    <bean id="credentialsMatcher" class="com.demo.common.shiro.RetryLimitHashedCredentialsMatcher">
+        <!--指定散列算法为md5，需要和生成密码时的一样-->
+        <property name="hashAlgorithmName" value="md5"/>
+        <!--散列迭代次数，需要和生成密码时一样-->
+        <property name="hashIterations" value="1"/>
+        <!-- 表示散列后的密码为16进制，需要和生成密码时一样，默认是base64-->
+        <property name="storedCredentialsHexEncoded" value="true"/>
+    </bean>
+
+
+    <!--shiro session 管理-->
+    <bean class="com.demo.common.session.CustomSessionManager" id="sessionManager">
+        <property name="sessionDAO" ref="redisSessionDao"/>
+    </bean>
+    <bean class="com.demo.common.session.RedisSessionDao" id="redisSessionDao"></bean>
+
+
+    <bean class="com.demo.common.shiro.RedisCacheManager" id="cacheManager">
+    </bean>
+
+    <bean class="org.apache.shiro.web.mgt.CookieRememberMeManager" id="cookieRememberMeManager">
+        <property name="cookie" ref="cookie"/>
+    </bean>
+    <bean class="org.apache.shiro.web.servlet.SimpleCookie" id="cookie">
+        <constructor-arg value="remmeberMe"/>
+        <!--cookie存活时间单位是秒-->
+        <property name="MaxAge" value="200000"/>
+    </bean>
+</beans>
